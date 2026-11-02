@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>MedApp - Gestion des Dossiers Médicaux</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 30px; background: #f0f2f5; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+        .badge-local { background: #ffebee; color: #c62828; }
+        .badge-cloud { background: #e8f5e9; color: #2e7d32; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #fafafa; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- État de l'infrastructure en temps réel -->
+    <div class="card">
+        <h2>État de l'Architecture</h2>
+        <p>
+            <strong>Stockage Fichiers :</strong>
+            {% if s3_bucket %}
+                <span class="badge badge-cloud">Amazon S3 ({{ s3_bucket }})</span>
+            {% else %}
+                <span class="badge badge-local">Local EBS (/opt/medapp/uploads)</span>
+            {% endif %}
+        </p>
+        <p>
+            <strong>Base de Données :</strong>
+            {% if db_host != 'localhost' and db_host != '127.0.0.1' %}
+                <span class="badge badge-cloud">Amazon RDS ({{ db_host }})</span>
+            {% else %}
+                <span class="badge badge-local">Local MariaDB (localhost)</span>
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <div class="card">
+        <h3>Nouveau Dossier Médical</h3>
+        <form method="POST" action="/add" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Nom du Patient :</label>
+                <input type="text" name="patient_name" placeholder="Ex: Karim Ziad" required>
+            </div>
+            <div class="form-group">
+                <label>Diagnostic :</label>
+                <textarea name="diagnosis" rows="2" placeholder="Ex: Contrôle scanner post-traumatique" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Scan / Document (Fichier) :</label>
+                <input type="file" name="file" required>
+            </div>
+            <button type="submit">Enregistrer le dossier</button>
+        </form>
+    </div>
+
+    <!-- Liste des dossiers existants -->
+    <div class="card">
+        <h3>Dossiers Enregistrés ({{ records|length }})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Diagnostic</th>
+                    <th>Document</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r['id'] }}</td>
+                    <td>{{ r['patient_name'] }}</td>
+                    <td>{{ r['diagnosis'] }}</td>
+                    <td><a href="{{ r['file_url'] }}" target="_blank">Consulter le fichier</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>
